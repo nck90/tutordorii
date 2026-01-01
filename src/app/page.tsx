@@ -101,17 +101,37 @@ export default function Home() {
 
       <main className="space-y-8 pb-10">
         {/* Hero Banner (Carousel Style) */}
-        <div className="w-full h-72 bg-slate-900 relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-900 to-slate-800" />
-          <div className="absolute inset-0 flex flex-col justify-center px-6">
-            <span className="text-primary font-bold text-xs mb-2 tracking-wider">PREMIUM CLASS</span>
-            <h1 className="text-3xl font-bold text-white mb-2 leading-tight">
-              이번 여름,<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-amber-500">아이비리그</span> 갈 준비 되셨나요?
-            </h1>
-            <p className="text-white/60 text-sm mb-6">검증된 상위 1% 튜터와 함께하는<br />프리미엄 입시 컨설팅</p>
-            <button className="w-fit bg-white text-black px-5 py-2.5 rounded-full text-xs font-bold hover:bg-white/90 transition-colors">
-              지금 시작하기
+        {/* Hero Banner (Premium Redesign) */}
+        <div className="w-full h-[340px] relative overflow-hidden group">
+          {/* Animated Gradient Background */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-500/30 via-slate-900 to-black z-0" />
+          <div className="absolute inset-0 bg-slate-900/40 z-0" /> {/* Dimmer */}
+
+          {/* Decorative Elements */}
+          <div className="absolute -top-24 -right-24 w-64 h-64 bg-blue-600/30 rounded-full blur-[80px] opacity-60 animate-pulse" />
+          <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-black via-black/50 to-transparent z-10" />
+
+          <div className="absolute inset-0 flex flex-col justify-end pb-12 px-6 z-20">
+            <div className="mb-4 space-y-1">
+              <span className="inline-block text-cyan-400 font-extrabold text-[10px] tracking-[0.2em] border border-cyan-400/30 px-2 py-1 rounded-full bg-cyan-950/30 backdrop-blur-md shadow-[0_0_10px_rgba(34,211,238,0.3)] mb-2">
+                PREMIUM CLASS
+              </span>
+              <h1 className="text-3xl font-black text-white leading-tight tracking-tight drop-shadow-xl">
+                아이비리그 합격,<br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-100 to-blue-300">
+                  이미 결정된 승부라면?
+                </span>
+              </h1>
+            </div>
+
+            <p className="text-slate-300 text-sm mb-6 font-medium leading-relaxed max-w-[280px]">
+              상위 1% 검증된 튜터들의<br />
+              합격 시크릿을 지금 바로 만나보세요.
+            </p>
+
+            <button className="w-fit bg-white text-slate-900 px-6 py-3 rounded-full text-sm font-bold hover:bg-slate-100 hover:scale-[1.02] transition-all shadow-[0_0_20px_rgba(255,255,255,0.3)] active:scale-95 flex items-center gap-2">
+              상위 1% 튜터 보기
+              <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         </div>
