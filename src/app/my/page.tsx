@@ -135,18 +135,22 @@ function StudentView({ logout }: { logout: () => void }) {
                             <Badge className="bg-white/20 hover:bg-white/20 text-white border-0 mb-4 backdrop-blur-md">오늘 13:00</Badge>
                             <h4 className="text-xl font-bold mb-1">AP Chemistry 심화</h4>
                             <p className="text-slate-300 text-sm mb-6">Sarah Kim 선생님</p>
-                            <Button size="sm" className="w-full bg-white text-slate-900 hover:bg-white/90 font-bold rounded-xl">
-                                강의실 입장하기
-                            </Button>
+                            <Link href="/my/classes">
+                                <Button size="sm" className="w-full bg-white text-slate-900 hover:bg-white/90 font-bold rounded-xl">
+                                    강의실 입장하기
+                                </Button>
+                            </Link>
                         </div>
                         {/* Card 2 */}
                         <div className="min-w-[280px] bg-white rounded-3xl p-5 text-slate-900 border border-slate-200 shadow-sm snap-center">
                             <Badge variant="secondary" className="bg-slate-100 text-slate-600 mb-4">내일 15:00</Badge>
                             <h4 className="text-xl font-bold mb-1">IB Math HL 문제풀이</h4>
                             <p className="text-slate-500 text-sm mb-6">David Lee 선생님</p>
-                            <Button size="sm" variant="outline" className="w-full rounded-xl border-slate-200 hover:bg-slate-50">
-                                수업 준비하기
-                            </Button>
+                            <Link href="/my/classes">
+                                <Button size="sm" variant="outline" className="w-full rounded-xl border-slate-200 hover:bg-slate-50">
+                                    수업 준비하기
+                                </Button>
+                            </Link>
                         </div>
                     </div>
                 </section>
@@ -155,11 +159,11 @@ function StudentView({ logout }: { logout: () => void }) {
                 <section className="space-y-3">
                     <h3 className="text-sm font-bold text-slate-400 ml-1">설정 및 관리</h3>
                     {[
-                        { icon: Heart, label: "찜한 선생님", count: "4명" },
-                        { icon: CreditCard, label: "결제 및 계좌 관리", count: null },
-                        { icon: Settings, label: "앱 설정", count: null },
+                        { icon: Heart, label: "찜한 선생님", count: "4명", href: "/my/wishlist" },
+                        { icon: CreditCard, label: "결제 및 계좌 관리", count: null, href: "/my/payments" },
+                        { icon: Settings, label: "앱 설정", count: null, href: "/my/settings" },
                     ].map((item, idx) => (
-                        <button key={idx} className="w-full bg-white p-4 rounded-2xl flex items-center justify-between border border-slate-100 shadow-sm hover:translate-x-1 transition-transform">
+                        <Link key={idx} href={item.href} className="w-full bg-white p-4 rounded-2xl flex items-center justify-between border border-slate-100 shadow-sm hover:translate-x-1 transition-transform">
                             <div className="flex items-center gap-4">
                                 <div className="p-2.5 bg-slate-50 rounded-xl text-slate-600">
                                     <item.icon className="w-5 h-5" />
@@ -170,7 +174,7 @@ function StudentView({ logout }: { logout: () => void }) {
                                 {item.count && <span className="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-md">{item.count}</span>}
                                 <ChevronRight className="w-4 h-4 text-slate-300" />
                             </div>
-                        </button>
+                        </Link>
                     ))}
                 </section>
 

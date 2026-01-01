@@ -90,11 +90,11 @@ export default function LoginPage() {
                 </div>
             </div>
 
-            {/* Footer / Safe Info */}
-            <div className="absolute bottom-8 flex items-center gap-2 text-xs text-muted-foreground/60">
+            {/* Footer / Safe Info - Terminated as per user request */}
+            {/* <div className="absolute bottom-8 flex items-center gap-2 text-xs text-muted-foreground/60">
                 <Check className="w-3 h-3" />
                 <span>철저한 신원 인증 시스템</span>
-            </div>
+            </div> */}
         </div>
     );
 }

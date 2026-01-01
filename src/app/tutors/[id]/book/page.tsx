@@ -25,6 +25,43 @@ export default function BookingPage() {
     const router = useRouter();
     const [selectedTime, setSelectedTime] = useState<string | null>(null);
     const [selectedDay, setSelectedDay] = useState("15");
+    const [paymentStatus, setPaymentStatus] = useState<"idle" | "processing" | "success">("idle");
+
+    const handlePayment = async () => {
+        if (!selectedTime) return;
+        setPaymentStatus("processing");
+
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        setPaymentStatus("success");
+
+        // Redirect after success
+        setTimeout(() => {
+            router.push("/my/classes");
+        }, 1500);
+    };
+
+    if (paymentStatus === "success") {
+        return (
+            <MobileLayout hideNav>
+                <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-500">
+                    <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6 animate-bounce">
+                        <Check className="w-10 h-10 text-green-600" />
+                    </div>
+                    <h1 className="text-2xl font-bold text-slate-900 mb-2">결제가 완료되었습니다!</h1>
+                    <p className="text-slate-500 mb-8">
+                        선생님과 수업 일정이 확정되었습니다.<br />
+                        내 강의실로 이동합니다.
+                    </p>
+                    <div className="flex gap-2">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-ping" />
+                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-ping delay-100" />
+                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-ping delay-200" />
+                    </div>
+                </div>
+            </MobileLayout>
+        );
+    }
 
     return (
         <MobileLayout hideNav>
@@ -115,11 +152,21 @@ export default function BookingPage() {
                 {/* Bottom Button */}
                 <div className="p-5 pb-10 bg-background border-t border-border/40">
                     <Button
-                        className="w-full h-14 text-lg font-bold shadow-lg shadow-primary/25 rounded-xl"
-                        disabled={!selectedTime}
+                        className="w-full h-14 text-lg font-bold shadow-lg shadow-primary/25 rounded-xl transition-all"
+                        disabled={!selectedTime || paymentStatus === "processing"}
+                        onClick={handlePayment}
                     >
-                        <Check className="w-5 h-5 mr-2" />
-                        결제하고 신청하기
+                        {paymentStatus === "processing" ? (
+                            <span className="flex items-center gap-2">
+                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                결제 진행 중...
+                            </span>
+                        ) : (
+                            <>
+                                <Check className="w-5 h-5 mr-2" />
+                                결제하고 신청하기
+                            </>
+                        )}
                     </Button>
                 </div>
             </div>

@@ -5,9 +5,47 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, Plus, MoreVertical, Users, BookOpen, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useUser } from "@/context/UserContext";
 
 export default function ClassesPage() {
+    const { role } = useUser();
     const router = useRouter();
+
+    if (role === "student") {
+        return (
+            <MobileLayout hideNav>
+                <div className="min-h-screen bg-slate-50 pb-20">
+                    <div className="bg-white sticky top-0 z-50 px-5 h-14 flex items-center justify-between border-b border-slate-100">
+                        <div className="flex items-center">
+                            <button onClick={() => router.back()} className="mr-4">
+                                <ChevronLeft className="w-6 h-6 text-slate-800" />
+                            </button>
+                            <h1 className="font-bold text-lg text-slate-900">내 강의실</h1>
+                        </div>
+                    </div>
+
+                    <div className="p-5 space-y-4">
+                        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+                            <Badge className="bg-blue-100 text-blue-600 hover:bg-blue-100 mb-3">진행 중</Badge>
+                            <h3 className="font-bold text-lg text-slate-900 mb-1">AP Chemistry 심화</h3>
+                            <p className="text-sm text-slate-500 mb-4">Sarah Kim 선생님 | 월/수 20:00</p>
+                            <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl h-12">
+                                강의실 입장하기
+                            </Button>
+                        </div>
+                        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm opacity-70">
+                            <Badge variant="outline" className="mb-3">종료됨</Badge>
+                            <h3 className="font-bold text-lg text-slate-900 mb-1">IB Math HL 기초</h3>
+                            <p className="text-sm text-slate-500 mb-4">David Lee 선생님</p>
+                            <Button variant="outline" className="w-full border-slate-200">
+                                복습하기
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </MobileLayout>
+        );
+    }
 
     return (
         <MobileLayout hideNav>
