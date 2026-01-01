@@ -14,18 +14,7 @@ export function Features() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
-                    {/* Feature 1: Verification */}
-                    <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-background border border-border/50 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 mb-6 text-primary">
-                            <ShieldCheck className="h-8 w-8" />
-                        </div>
-                        <h3 className="text-xl font-bold mb-3">철저한 신원/학력 검증</h3>
-                        <p className="text-muted-foreground leading-relaxed">
-                            학생증만으로는 부족합니다. <br />
-                            졸업/성적 증명서와 경력까지 <br />
-                            <strong>관리자가 직접 육안으로 검수</strong>합니다.
-                        </p>
-                    </div>
+
 
                     {/* Feature 2: Matching */}
                     <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-background border border-border/50 shadow-sm hover:shadow-md transition-shadow">

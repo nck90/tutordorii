@@ -7,6 +7,7 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger, Drawer
 import { SearchIcon, X, SlidersHorizontal, ChevronRight, Star } from "lucide-react";
 import { useState } from "react";
 import { TutorCardVertical } from "@/components/tutor/TutorCardVertical";
+import Link from "next/link";
 
 const TUTORS = [
     { id: "1", name: "Sarah Kim", university: "Princeton", major: "Chemistry", tags: ["AP Chem", "IB Chem"], rating: 4.9, imageUrl: "" },
@@ -45,7 +46,11 @@ export default function SearchPage() {
                         <h3 className="text-sm font-bold text-muted-foreground mb-4">자주 찾는 과목</h3>
                         <div className="grid grid-cols-2 gap-3">
                             {["IB Math", "AP Chemistry", "SAT", "College Essay"].map(tag => (
-                                <button key={tag} className="h-12 bg-neutral-50 rounded-xl px-4 flex items-center justify-between hover:bg-neutral-100 transition-colors">
+                                <button
+                                    key={tag}
+                                    onClick={() => setActiveTags([tag])}
+                                    className="h-12 bg-neutral-50 rounded-xl px-4 flex items-center justify-between hover:bg-neutral-100 transition-colors"
+                                >
                                     <span className="font-semibold text-slate-700">{tag}</span>
                                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
                                 </button>
@@ -84,11 +89,7 @@ export default function SearchPage() {
                 {/* Results List (Full Width Cards) */}
                 <div className="px-6 space-y-4">
                     {TUTORS.map(tutor => (
-                        <div key={tutor.id} className="w-full bg-white rounded-2xl p-1 shadow-[0_2px_15px_rgba(0,0,0,0.03)] border border-slate-100">
-                            {/* Reuse Vertical Card but allow it to adapt or create a specific Horizontal List Card? 
-                          For now, using the vertical card wrapper might look odd if it's fixed width.
-                          Let's inline a "Wide Card" here for better 'Search' experience since user wants balanced UI.
-                      */}
+                        <Link href={`/tutors/${tutor.id}`} key={tutor.id} className="block w-full bg-white rounded-2xl p-1 shadow-[0_2px_15px_rgba(0,0,0,0.03)] border border-slate-100 transition-transform active:scale-[0.98]">
                             <div className="flex p-4 gap-4">
                                 <div className="w-20 h-20 bg-slate-100 rounded-xl shrink-0 overflow-hidden relative">
                                     {/* Avatar */}
@@ -116,7 +117,7 @@ export default function SearchPage() {
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </Link>
                     ))}
                 </div>
 

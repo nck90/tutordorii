@@ -60,7 +60,7 @@ export default function TutorDetailPage() {
                         style={{ transformStyle: "preserve-3d" }}
                     >
                         {/* === FRONT FACE: Profile Image === */}
-                        <div className="absolute inset-0 backface-hidden">
+                        <div className={`absolute inset-0 backface-hidden transition-opacity duration-500 ${isPlaying ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
                             {/* Background Image */}
                             <div className="w-full h-full bg-slate-800 relative">
                                 {/* Mock Profile Image Placeholder - Replace with Real Image tag in production */}
