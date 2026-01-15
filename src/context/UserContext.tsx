@@ -9,6 +9,7 @@ interface UserContextType {
     setRole: (role: UserRole) => void;
     isLoggedIn: boolean;
     logout: () => void;
+    user: { name: string; email: string } | null;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -30,8 +31,14 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     const logout = () => setRole(null);
 
+    // Mock User Object
+    const user = role ? {
+        name: role === 'tutor' ? '김튜터' : '이학생',
+        email: role === 'tutor' ? 'tutor@test.com' : 'student@test.com'
+    } : null;
+
     return (
-        <UserContext.Provider value={{ role, setRole, isLoggedIn: !!role, logout }}>
+        <UserContext.Provider value={{ role, setRole, isLoggedIn: !!role, logout, user }}>
             {children}
         </UserContext.Provider>
     );
@@ -44,3 +51,4 @@ export function useUser() {
     }
     return context;
 }
+

@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+
 import { MobileLayout } from "@/components/layout/MobileLayout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -22,14 +24,19 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { motion } from "framer-motion";
+
 
 export default function MyPage() {
     const { role, logout } = useUser();
     const router = useRouter();
 
+    useEffect(() => {
+        if (!role) {
+            router.push("/login");
+        }
+    }, [role, router]);
+
     if (!role) {
-        if (typeof window !== 'undefined') router.push("/login");
         return null;
     }
 
@@ -47,144 +54,212 @@ export default function MyPage() {
 // ==========================================
 // 🎓 STUDENT VIEW
 // ==========================================
+// ==========================================
+// 🎓 STUDENT VIEW (SERVER COMPONENT WRAPPER PATTERN RECOMMENDED, BUT HERE WE USE CLIENT FETCH FOR MVP)
+// Actually, to use hooks like useEffect, we must be client. But actions are async.
+// Best pattern: Page is Server Component -> Passes data to Client View.
+// But this file is "use client" at top.
+// So we should fetch in useEffect or convert to Server Component.
+// Let's refactor `MyPage` to be a Server Component and split Views into Client Components.
+// But wait, `useUser` is client context.
+// Compromise: Keep "use client" and fetch data inside useEffect or use SWR/Tanstack Query.
+// For MVP without SWR, simple useEffect with state.
+
+import { getMyRequestsAction, getStudentChatRoomsAction, getLikedTutorsAction } from "@/app/actions";
+import { useState } from "react";
+import { MessageCircle } from "lucide-react";
+
 function StudentView({ logout }: { logout: () => void }) {
     const router = useRouter();
+    const [requests, setRequests] = useState<any[]>([]);
+    const [chats, setChats] = useState<any[]>([]);
+    const [likes, setLikes] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            const [reqs, rooms, likedTutors] = await Promise.all([
+                getMyRequestsAction(),
+                getStudentChatRoomsAction(),
+                getLikedTutorsAction()
+            ]);
+            setRequests(reqs);
+            setChats(rooms);
+            setLikes(likedTutors);
+            setLoading(false);
+        };
+        fetchData();
+    }, []);
+
+    if (loading) return <div className="p-10 text-center text-slate-400">데이터를 불러오는 중입니다...</div>;
 
     return (
         <>
-            {/* Header Section */}
-            <div className="bg-white p-6 pb-8 rounded-b-[2rem] shadow-sm relative z-10">
-                <div className="flex justify-between items-start mb-6">
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-900 mb-1">박준원 학생님</h1>
-                        <p className="text-slate-500 text-sm font-medium">오늘도 목표를 향해 달려보세요! 🔥</p>
-                    </div>
-                    <Button variant="ghost" size="icon" className="text-slate-400 hover:bg-slate-100 rounded-full">
-                        <Bell className="w-6 h-6" />
-                    </Button>
-                </div>
-
-                {/* Profile Stats Card */}
-                <div className="flex items-center gap-5">
-                    <Avatar className="w-20 h-20 border-4 border-slate-50 shadow-lg">
-                        <AvatarImage src="https://github.com/shadcn.png" />
-                        <AvatarFallback className="bg-blue-100 text-blue-600 font-bold text-2xl">P</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 grid grid-cols-2 gap-3">
-                        <div className="bg-blue-50 p-3 rounded-2xl text-center border border-blue-100">
-                            <p className="text-xs text-blue-600 font-bold mb-1">이번 주 학습</p>
-                            <p className="text-xl font-extrabold text-blue-900">12<span className="text-sm font-medium text-blue-600 ml-0.5">시간</span></p>
-                        </div>
-                        <div className="bg-slate-50 p-3 rounded-2xl text-center border border-slate-100">
-                            <p className="text-xs text-slate-500 font-bold mb-1">보유 쿠폰</p>
-                            <p className="text-xl font-extrabold text-slate-900">2<span className="text-sm font-medium text-slate-500 ml-0.5">장</span></p>
-                        </div>
-                    </div>
+            {/* 1. Simple Minimal Header (Toss Style) */}
+            <div className="bg-white px-6 pt-10 pb-6 sticky top-0 z-40">
+                <div className="flex justify-between items-start mb-4">
+                    <h1 className="text-2xl font-bold text-foreground tracking-tight leading-snug">
+                        박준원 학생님,<br />
+                        <span className="text-foreground/60">오늘도 화이팅! 🔥</span>
+                    </h1>
+                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100">
+                        <UserCircle className="w-5 h-5 text-slate-500" />
+                    </span>
                 </div>
             </div>
 
-            <div className="p-5 space-y-8">
-                {/* 1. Learning Report Graph (CSS Bar Chart) */}
-                <section>
-                    <div className="flex items-center justify-between mb-4 px-1">
-                        <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                            <TrendingUp className="w-5 h-5 text-blue-500" />
-                            학습 리포트
-                        </h3>
-                        <Button variant="ghost" size="sm" className="text-slate-400 text-xs h-8 px-2 hover:text-slate-600 hover:bg-transparent">
-                            전체보기 <ChevronRight className="w-3 h-3 ml-1" />
-                        </Button>
+            <div className="p-5 space-y-6 pb-24">
+                {/* 2. Menu Grid */}
+                <div className="grid grid-cols-4 gap-3">
+                    <Link href="/my/classes" className="flex flex-col items-center gap-2 group cursor-pointer">
+                        <div className="w-full aspect-square bg-white rounded-3xl flex items-center justify-center shadow-sm border border-slate-100 group-hover:bg-slate-50 transition-colors">
+                            <BookOpen className="w-8 h-8 text-slate-900" strokeWidth={1.5} />
+                        </div>
+                        <span className="text-[11px] font-bold text-slate-600">수업 일정</span>
+                    </Link>
+                    <Link href="/my/wishlist" className="flex flex-col items-center gap-2 group cursor-pointer">
+                        <div className="w-full aspect-square bg-white rounded-3xl flex items-center justify-center shadow-sm border border-slate-100 group-hover:bg-slate-50 transition-colors">
+                            <Heart className="w-8 h-8 text-slate-900" strokeWidth={1.5} />
+                        </div>
+                        <span className="text-[11px] font-bold text-slate-600">찜한 목록</span>
+                    </Link>
+                    <Link href="/my/coupons" className="flex flex-col items-center gap-2 group cursor-pointer">
+                        <div className="w-full aspect-square bg-white rounded-3xl flex items-center justify-center shadow-sm border border-slate-100 group-hover:bg-slate-50 transition-colors">
+                            <CreditCard className="w-8 h-8 text-slate-900" strokeWidth={1.5} />
+                        </div>
+                        <span className="text-[11px] font-bold text-slate-600">쿠폰함</span>
+                    </Link>
+                    <Link href="/my/points" className="flex flex-col items-center gap-2 group cursor-pointer">
+                        <div className="w-full aspect-square bg-white rounded-3xl flex items-center justify-center shadow-sm border border-slate-100 group-hover:bg-slate-50 transition-colors">
+                            <TrendingUp className="w-8 h-8 text-slate-900" strokeWidth={1.5} />
+                        </div>
+                        <span className="text-[11px] font-bold text-slate-600">포인트</span>
+                    </Link>
+                </div>
+
+                {/* Promo Banner - Sleek Dark Design */}
+                <div className="bg-slate-900 rounded-3xl p-5 text-white flex justify-between items-center shadow-lg shadow-slate-900/20 active:scale-[0.98] transition-transform cursor-pointer">
+                    <div>
+                        <p className="font-bold text-sm mb-1">친구 초대하고 포인트 받자!</p>
+                        <p className="text-xs text-slate-400">친구 한 명당 <span className="text-white font-bold">5,000P</span> 즉시 지급</p>
                     </div>
-                    <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100">
-                        <div className="flex items-end justify-between h-32 gap-2 mt-2">
-                            {/* Mock Data Bars */}
-                            {[40, 65, 30, 85, 50, 95, 20].map((h, i) => (
-                                <div key={i} className="flex flex-col items-center gap-2 flex-1 group cursor-pointer">
-                                    <div className="w-full relative h-full flex items-end justify-center rounded-t-lg bg-slate-100 overflow-hidden group-hover:bg-blue-50 transition-colors">
-                                        <motion.div
-                                            initial={{ height: 0 }}
-                                            whileInView={{ height: `${h}%` }}
-                                            transition={{ duration: 1, delay: i * 0.1, type: "spring" }}
-                                            className={`w-full bg-blue-500 rounded-t-md opacity-80 group-hover:opacity-100`}
-                                        />
+                    <div className="h-10 w-10 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
+                        <ChevronRight className="w-6 h-6 text-white" />
+                    </div>
+                </div>
+
+                {/* 3. My Learning Status */}
+                {(chats.length > 0 || requests.length > 0) && (
+                    <section>
+                        <h3 className="text-lg font-bold text-slate-900 mb-4 px-1">나의 학습 현황</h3>
+
+                        <div className="space-y-3">
+                            {/* Ongoing Chats */}
+                            {chats.map((chat) => (
+                                <Link href={`/chat/${chat.id}`} key={chat.id} className="block">
+                                    <div className="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 flex items-center gap-4 hover:bg-slate-50 transition-colors">
+                                        <div className="relative">
+                                            <Avatar className="w-12 h-12">
+                                                <AvatarImage src={chat.otherImage} />
+                                                <AvatarFallback>{chat.otherName[0]}</AvatarFallback>
+                                            </Avatar>
+                                            <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></span>
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex justify-between items-center mb-0.5">
+                                                <h4 className="font-bold text-slate-900">{chat.otherName} 선생님</h4>
+                                                <span className="text-[10px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full font-bold">상담중</span>
+                                            </div>
+                                            <p className="text-xs text-slate-500 truncate">{chat.lastMessage}</p>
+                                        </div>
+                                        <ChevronRight className="w-4 h-4 text-slate-300" />
                                     </div>
-                                    <span className={`text-[10px] font-bold ${i === 5 ? "text-blue-600" : "text-slate-400"}`}>
-                                        {["월", "화", "수", "목", "금", "토", "일"][i]}
-                                    </span>
+                                </Link>
+                            ))}
+
+                            {/* Sent Requests */}
+                            {requests.map((req) => (
+                                <div key={req.id} className="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 hover:bg-slate-50 transition-colors">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <Badge variant="secondary" className="bg-slate-100 text-slate-600 font-normal rounded-md px-2">
+                                            {req.subject}
+                                        </Badge>
+                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${req.status === 'ACCEPTED' ? 'bg-green-100 text-green-700' :
+                                            req.status === 'REJECTED' ? 'bg-red-100 text-red-700' : 'bg-slate-200 text-slate-600'
+                                            }`}>
+                                            {req.status === 'ACCEPTED' ? '수락됨' : req.status === 'REJECTED' ? '거절됨' : '대기중'}
+                                        </span>
+                                    </div>
+                                    <p className="text-sm font-bold text-slate-900 mb-1">{req.studentName || '선생님'}에게 보낸 요청</p>
+                                    <p className="text-xs text-slate-500 truncate mb-2">{req.message}</p>
+                                    <p className="text-[10px] text-slate-400 text-right">
+                                        {new Date(req.createdAt).toLocaleDateString()}
+                                    </p>
                                 </div>
                             ))}
                         </div>
-                        <p className="text-center text-xs text-slate-500 mt-4 font-medium">
-                            지난주보다 <span className="text-blue-600 font-bold">3시간 20분</span> 더 공부했어요! 🎉
-                        </p>
-                    </div>
-                </section>
+                    </section>
+                )}
 
-                {/* 2. Upcoming Classes (Horizontal Scroll) */}
-                <section>
-                    <h3 className="text-lg font-bold text-slate-900 mb-4 px-1 flex items-center gap-2">
-                        <Calendar className="w-5 h-5 text-indigo-500" />
-                        다가오는 수업
-                    </h3>
-                    <div className="flex overflow-x-auto pb-4 -mx-5 px-5 gap-4 scrollbar-hide snap-x">
-                        {/* Card 1 */}
-                        <div className="min-w-[280px] bg-slate-900 rounded-3xl p-5 text-white shadow-xl shadow-slate-200 snap-center relative overflow-hidden">
-                            <div className="absolute top-0 right-0 p-5 opacity-10">
-                                <BookOpen className="w-24 h-24" />
-                            </div>
-                            <Badge className="bg-white/20 hover:bg-white/20 text-white border-0 mb-4 backdrop-blur-md">오늘 13:00</Badge>
-                            <h4 className="text-xl font-bold mb-1">AP Chemistry 심화</h4>
-                            <p className="text-slate-300 text-sm mb-6">Sarah Kim 선생님</p>
-                            <Link href="/my/classes">
-                                <Button size="sm" className="w-full bg-white text-slate-900 hover:bg-white/90 font-bold rounded-xl">
-                                    강의실 입장하기
-                                </Button>
+                {/* 4. Wishlist */}
+                {likes.length > 0 && (
+                    <section>
+                        <div className="flex items-center justify-between mb-4 px-1">
+                            <h3 className="text-lg font-bold text-slate-900">찜한 선생님</h3>
+                            <Link href="/my/wishlist" className="text-xs text-slate-400 font-medium flex items-center hover:text-slate-600">
+                                전체보기 <ChevronRight className="w-3 h-3 ml-0.5" />
                             </Link>
                         </div>
-                        {/* Card 2 */}
-                        <div className="min-w-[280px] bg-white rounded-3xl p-5 text-slate-900 border border-slate-200 shadow-sm snap-center">
-                            <Badge variant="secondary" className="bg-slate-100 text-slate-600 mb-4">내일 15:00</Badge>
-                            <h4 className="text-xl font-bold mb-1">IB Math HL 문제풀이</h4>
-                            <p className="text-slate-500 text-sm mb-6">David Lee 선생님</p>
-                            <Link href="/my/classes">
-                                <Button size="sm" variant="outline" className="w-full rounded-xl border-slate-200 hover:bg-slate-50">
-                                    수업 준비하기
-                                </Button>
-                            </Link>
+                        <div className="overflow-x-auto pb-4 -mx-5 px-5 flex gap-3 no-scrollbar">
+                            {likes.map((tutor) => (
+                                <Link href={`/tutors/${tutor.id}`} key={tutor.id} className="block w-[140px] shrink-0">
+                                    <div className="bg-white p-2.5 rounded-3xl shadow-sm border border-slate-100">
+                                        <div className="aspect-square bg-slate-100 rounded-2xl mb-2 overflow-hidden relative">
+                                            {tutor.imageUrl ? (
+                                                <img src={tutor.imageUrl} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="flex items-center justify-center w-full h-full text-2xl font-bold text-slate-300">{tutor.name[0]}</div>
+                                            )}
+                                        </div>
+                                        <h4 className="font-bold text-slate-900 text-sm truncate mb-0.5">{tutor.name}</h4>
+                                        <p className="text-[10px] text-slate-500 truncate">{tutor.university}</p>
+                                    </div>
+                                </Link>
+                            ))}
                         </div>
-                    </div>
+                    </section>
+                )}
+
+                {/* 5. App Service Menu */}
+                <section className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden divide-y divide-slate-50/50">
+                    <Link href="/notice" className="flex items-center justify-between p-4 px-5 hover:bg-slate-50 transition-colors">
+                        <span className="text-sm font-medium text-slate-700">공지사항</span>
+                        <ChevronRight className="w-4 h-4 text-slate-300" />
+                    </Link>
+                    <Link href="/faq" className="flex items-center justify-between p-4 px-5 hover:bg-slate-50 transition-colors">
+                        <span className="text-sm font-medium text-slate-700">자주 묻는 질문</span>
+                        <ChevronRight className="w-4 h-4 text-slate-300" />
+                    </Link>
+                    <Link href="/cs" className="flex items-center justify-between p-4 px-5 hover:bg-slate-50 transition-colors">
+                        <span className="text-sm font-medium text-slate-700">고객센터 문의하기</span>
+                        <ChevronRight className="w-4 h-4 text-slate-300" />
+                    </Link>
+                    <Link href="/settings" className="flex items-center justify-between p-4 px-5 hover:bg-slate-50 transition-colors">
+                        <span className="text-sm font-medium text-slate-700">앱 설정</span>
+                        <ChevronRight className="w-4 h-4 text-slate-300" />
+                    </Link>
                 </section>
 
-                {/* 3. Menu List */}
-                <section className="space-y-3">
-                    <h3 className="text-sm font-bold text-slate-400 ml-1">설정 및 관리</h3>
-                    {[
-                        { icon: Heart, label: "찜한 선생님", count: "4명", href: "/my/wishlist" },
-                        { icon: CreditCard, label: "결제 및 계좌 관리", count: null, href: "/my/payments" },
-                        { icon: Settings, label: "앱 설정", count: null, href: "/my/settings" },
-                    ].map((item, idx) => (
-                        <Link key={idx} href={item.href} className="w-full bg-white p-4 rounded-2xl flex items-center justify-between border border-slate-100 shadow-sm hover:translate-x-1 transition-transform">
-                            <div className="flex items-center gap-4">
-                                <div className="p-2.5 bg-slate-50 rounded-xl text-slate-600">
-                                    <item.icon className="w-5 h-5" />
-                                </div>
-                                <span className="font-bold text-slate-700">{item.label}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                {item.count && <span className="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-md">{item.count}</span>}
-                                <ChevronRight className="w-4 h-4 text-slate-300" />
-                            </div>
-                        </Link>
-                    ))}
-                </section>
-
-                <div className="pt-4 pb-8">
+                <div className="pt-2">
                     <button
                         onClick={logout}
-                        className="text-xs text-slate-400 underline decoration-slate-300 underline-offset-4 hover:text-slate-600 mx-auto block"
+                        className="w-full py-4 text-sm font-medium text-slate-400 hover:text-slate-600 transition-colors text-center"
                     >
                         로그아웃
                     </button>
+                    <div className="text-[10px] text-slate-300 text-center mt-2">
+                        버전 1.0.2 &bull; 이용약관 &bull; 개인정보처리방침
+                    </div>
                 </div>
             </div>
         </>
@@ -192,147 +267,175 @@ function StudentView({ logout }: { logout: () => void }) {
 }
 
 // ==========================================
-// 👔 TUTOR VIEW (Placeholder for next step)
+// 👔 TUTOR VIEW
 // ==========================================
+import { getTutorChatRoomsAction, acceptRequestAction, rejectRequestAction } from "@/app/actions";
+
 function TutorView({ logout }: { logout: () => void }) {
     const router = useRouter();
+    const [requests, setRequests] = useState<any[]>([]);
+    const [chats, setChats] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const refreshData = async () => {
+        const [reqs, rooms] = await Promise.all([
+            getMyRequestsAction(), // calls as tutor
+            getTutorChatRoomsAction()
+        ]);
+        setRequests(reqs);
+        setChats(rooms);
+        setLoading(false);
+    }
+
+    useEffect(() => {
+        refreshData();
+    }, []);
+
+    const handleAccept = async (reqId: string) => {
+        await acceptRequestAction(reqId);
+        refreshData();
+    };
+
+    const handleReject = async (reqId: string) => {
+        await rejectRequestAction(reqId);
+        refreshData();
+    };
+
+    if (loading) return <div className="p-10 text-center text-slate-400">데이터를 불러오는 중입니다...</div>;
+
+    const pendingRequests = requests.filter(r => r.status === 'PENDING');
 
     return (
         <>
             {/* Header Section */}
-            <div className="bg-black p-6 pb-8 rounded-b-[2rem] shadow-xl shadow-slate-900/20 relative z-10 text-white">
-                <div className="flex justify-between items-start mb-6">
+            <div className="bg-background/50 backdrop-blur-sm p-6 pt-8 pb-6 border-b border-border sticky top-0 z-40">
+                <div className="relative flex justify-between items-start mb-6">
                     <div>
-                        <h1 className="text-2xl font-bold mb-1">김수학 선생님</h1>
-                        <p className="text-slate-400 text-sm font-medium">프리미엄 튜터 인증 완료 <ShieldCheck className="w-4 h-4 text-blue-400 inline ml-1" /></p>
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary text-foreground mb-3">
+                            <ShieldCheck className="w-3 h-3" />
+                            <span className="text-[10px] font-bold">VERIFIED TUTOR</span>
+                        </div>
+                        <h1 className="text-2xl font-bold mb-1 text-foreground">튜터 대시보드</h1>
+                        <p className="text-muted-foreground text-sm">오늘의 수업 일정을 확인하세요</p>
                     </div>
-                    <Button variant="ghost" size="icon" className="text-slate-300 hover:bg-white/10 rounded-full">
+                    <Button variant="ghost" size="icon" className="text-muted-foreground hover:bg-secondary rounded-full h-10 w-10">
                         <Bell className="w-6 h-6" />
                     </Button>
                 </div>
 
-                {/* Profile Stats Card (Dark Theme) */}
-                <div className="flex items-center gap-5">
+                {/* Profile Stats Card (Monochrome) */}
+                <div className="flex items-center gap-5 bg-card p-4 rounded-3xl border border-border shadow-sm">
                     <div className="relative">
-                        <Avatar className="w-20 h-20 border-4 border-slate-800 shadow-xl">
+                        <Avatar className="w-14 h-14 border border-border">
                             <AvatarImage src="" />
-                            <AvatarFallback className="bg-slate-700 text-slate-300 font-bold text-2xl">K</AvatarFallback>
+                            <AvatarFallback className="bg-secondary text-foreground font-bold text-lg">T</AvatarFallback>
                         </Avatar>
-                        <div className="absolute -bottom-1 -right-1 bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full border-2 border-slate-900">PRO</div>
                     </div>
 
-                    <div className="flex-1">
-                        <div className="flex justify-between items-end mb-1">
-                            <span className="text-slate-400 text-xs font-bold">이번 달 예상 수입</span>
-                            <Link href="/my/settlement" className="text-blue-400 text-xs font-medium cursor-pointer hover:underline">정산 내역 &gt;</Link>
+                    <div className="flex-1 border-l border-border pl-5">
+                        <span className="text-muted-foreground text-xs font-medium block mb-0.5">진행 중인 수업</span>
+                        <div className="flex items-baseline gap-1">
+                            <span className="text-2xl font-bold text-foreground">{chats.length}</span>
+                            <span className="text-xs text-muted-foreground">건</span>
                         </div>
-                        <p className="text-3xl font-extrabold tracking-tight">2,450,000<span className="text-lg font-medium text-slate-500 ml-1">원</span></p>
                     </div>
                 </div>
             </div>
 
             <div className="p-5 space-y-8">
-                {/* 1. Revenue Dashboard Chart (Line Chart Mock) */}
-                <section>
-                    <h3 className="text-lg font-bold text-slate-900 mb-4 px-1 flex items-center gap-2">
-                        <TrendingUp className="w-5 h-5 text-emerald-500" />
-                        수입 리포트
-                    </h3>
-                    <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-                            <CreditCard className="w-32 h-32" />
+                {/* Navigation Menu */}
+                <div className="grid grid-cols-3 gap-3">
+                    <Link href="/my/classes" className="flex flex-col items-center gap-2 p-4 rounded-3xl bg-white border border-slate-100 shadow-sm hover:bg-accent transition-colors">
+                        <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-1">
+                            <BookOpen className="w-6 h-6" />
                         </div>
-
-                        {/* Chart Area */}
-                        <div className="h-40 flex items-end justify-between gap-1 relative z-10">
-                            {/* Simple SVG Line Chart Mock using CSS borders/positioning or just bars for MVP stability */}
-                            {[20, 45, 30, 60, 55, 80, 65].map((h, i) => (
-                                <div key={i} className="flex flex-col items-center gap-2 flex-1 group">
-                                    <div className="w-full h-full flex items-end justify-center rounded-sm">
-                                        <motion.div
-                                            initial={{ height: 0 }}
-                                            whileInView={{ height: `${h}%` }}
-                                            transition={{ duration: 0.8, delay: i * 0.05 }}
-                                            className="w-2 bg-slate-100 rounded-full relative group-hover:bg-slate-200"
-                                        >
-                                            {/* Active Point */}
-                                            {i === 6 && (
-                                                <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full shadow-md animate-bounce" />
-                                            )}
-                                        </motion.div>
-                                    </div>
-                                    <span className="text-[10px] text-slate-400 font-medium">{i + 1}주</span>
-                                </div>
-                            ))}
+                        <span className="text-xs font-bold text-slate-600">수업 관리</span>
+                    </Link>
+                    <Link href="/my/profile" className="flex flex-col items-center gap-2 p-4 rounded-3xl bg-white border border-slate-100 shadow-sm hover:bg-accent transition-colors">
+                        <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center mb-1">
+                            <UserCircle className="w-6 h-6" />
                         </div>
-
-                        <div className="mt-4 flex gap-3">
-                            <Button className="flex-1 bg-slate-900 text-white hover:bg-slate-800 rounded-xl font-bold" asChild>
-                                <Link href="/my/settlement">
-                                    정산 신청하기
-                                </Link>
-                            </Button>
+                        <span className="text-xs font-bold text-slate-600">프로필 수정</span>
+                    </Link>
+                    <Link href="/my/settlement" className="flex flex-col items-center gap-2 p-4 rounded-3xl bg-white border border-slate-100 shadow-sm hover:bg-accent transition-colors">
+                        <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mb-1">
+                            <CreditCard className="w-6 h-6" />
                         </div>
-                    </div>
-                </section>
+                        <span className="text-xs font-bold text-slate-600">정산 관리</span>
+                    </Link>
+                </div>
 
-                {/* 2. Today's Schedule (Timeline) */}
+                {/* 1. Pending Requests */}
                 <section>
                     <div className="flex items-center justify-between mb-4 px-1">
                         <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                            <Clock className="w-5 h-5 text-blue-500" />
-                            오늘의 수업
+                            <Bell className="w-5 h-5 text-red-500" />
+                            새로운 요청 ({pendingRequests.length})
                         </h3>
-                        <Badge variant="outline" className="border-blue-200 text-blue-600 bg-blue-50">3건 예정</Badge>
                     </div>
 
-                    <div className="bg-white rounded-3xl p-1 shadow-sm border border-slate-100 divide-y divide-slate-100">
-                        {[
-                            { time: "14:00", subject: "IB Math HL", student: "김지민 학생", status: "finished" },
-                            { time: "16:00", subject: "AP Chemistry", student: "James Park", status: "upcoming" },
-                            { time: "19:00", subject: "SAT Math 실전", student: "이준호 학생", status: "upcoming" },
-                        ].map((cls, idx) => (
-                            <div key={idx} className="p-4 flex items-center gap-4 hover:bg-slate-50 transition-colors rounded-2xl group cursor-pointer">
-                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-sm ${cls.status === 'finished' ? 'bg-slate-100 text-slate-400' : 'bg-blue-100 text-blue-600'}`}>
-                                    {cls.time}
-                                </div>
-                                <div className="flex-1">
-                                    <h4 className={`font-bold text-base ${cls.status === 'finished' ? 'text-slate-400 decoration-slate-300 line-through' : 'text-slate-800'}`}>
-                                        {cls.subject}
-                                    </h4>
-                                    <p className="text-xs text-slate-500 font-medium">{cls.student}</p>
-                                </div>
-                                {cls.status === 'upcoming' && (
-                                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg h-8 px-3 text-xs">
-                                        입장
-                                    </Button>
-                                )}
+                    <div className="space-y-3">
+                        {pendingRequests.length === 0 ? (
+                            <div className="text-center py-6 bg-white rounded-3xl border border-dashed border-slate-200 text-slate-400 text-sm">
+                                대기 중인 요청이 없습니다.
                             </div>
-                        ))}
+                        ) : (
+                            pendingRequests.map((req) => (
+                                <div key={req.id} className="bg-white p-5 rounded-3xl shadow-sm border border-red-50 ring-1 ring-red-100 relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 p-3">
+                                        <Badge className="bg-red-100 text-red-600 hover:bg-red-100">Action Required</Badge>
+                                    </div>
+                                    <h4 className="font-bold text-slate-900 text-lg mb-1">{req.studentName} 학생</h4>
+                                    <p className="text-sm font-bold text-blue-600 mb-4">{req.subject}</p>
+
+                                    <div className="bg-slate-50 p-3 rounded-xl text-sm text-slate-600 mb-4">
+                                        "{req.message}"
+                                    </div>
+
+                                    <div className="flex gap-2">
+                                        <Button className="flex-1 bg-slate-900 hover:bg-slate-800 rounded-xl" onClick={() => handleAccept(req.id)}>
+                                            수락하기
+                                        </Button>
+                                        <Button variant="outline" className="flex-1 border-slate-200 hover:bg-red-50 hover:text-red-600 rounded-xl" onClick={() => handleReject(req.id)}>
+                                            거절하기
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))
+                        )}
                     </div>
                 </section>
 
-                {/* 3. Menu List */}
-                <section className="space-y-3">
-                    <h3 className="text-sm font-bold text-slate-400 ml-1">관리</h3>
-                    {[
-                        { icon: BookOpen, label: "커리큘럼 및 수업 관리", href: "/my/classes" },
-                        { icon: UserCircle, label: "프로필 수정", href: "/my/profile" },
-                        { icon: Settings, label: "튜터 설정", href: "/my/settings" },
-                    ].map((item, idx) => (
-                        <Link key={idx} href={item.href} className="w-full bg-white p-4 rounded-2xl flex items-center justify-between border border-slate-100 shadow-sm hover:translate-x-1 transition-transform">
-                            <div className="flex items-center gap-4">
-                                <div className="p-2.5 bg-slate-50 rounded-xl text-slate-600">
-                                    <item.icon className="w-5 h-5" />
-                                </div>
-                                <span className="font-bold text-slate-700">{item.label}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <ChevronRight className="w-4 h-4 text-slate-300" />
-                            </div>
-                        </Link>
-                    ))}
-                </section>
+                {/* 2. Active Chats */}
+                {chats.length > 0 && (
+                    <section>
+                        <h3 className="text-lg font-bold text-slate-900 mb-4 px-1 flex items-center gap-2">
+                            <MessageCircle className="w-5 h-5 text-blue-500" />
+                            진행 중인 상담
+                        </h3>
+                        <div className="space-y-3">
+                            {chats.map((chat) => (
+                                <Link href={`/chat/${chat.id}`} key={chat.id} className="block">
+                                    <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex items-center gap-4 hover:bg-accent transition-colors">
+                                        <Avatar className="w-12 h-12">
+                                            <AvatarImage src="" />
+                                            <AvatarFallback>{chat.otherName[0]}</AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex justify-between items-baseline mb-1">
+                                                <h4 className="font-bold text-slate-900 truncate">{chat.otherName} 학생</h4>
+                                                <span className="text-[10px] text-slate-400">
+                                                    {new Date(chat.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </span>
+                                            </div>
+                                            <p className="text-sm text-slate-500 truncate">{chat.lastMessage}</p>
+                                        </div>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    </section>
+                )}
 
                 <div className="pt-4 pb-8">
                     <button

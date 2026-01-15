@@ -45,7 +45,7 @@ export function TutorCard({ name, university, major, tags, imageUrl, rating, rev
                     </div>
                     <div className="flex flex-wrap gap-2">
                         {tags.map((tag) => (
-                            <Badge key={tag} variant="secondary" className="bg-secondary/50 hover:bg-secondary text-xs font-normal">
+                            <Badge key={tag} variant="secondary" className="bg-secondary/50 hover:bg-secondary text-xs font-normal text-slate-700">
                                 {tag}
                             </Badge>
                         ))}
@@ -57,7 +57,7 @@ export function TutorCard({ name, university, major, tags, imageUrl, rating, rev
                         <span className="font-bold text-foreground mr-1">{rating}</span>
                         <span className="text-xs">({reviewCount})</span>
                     </div>
-                    <div className="text-xs font-medium px-2 py-1 rounded bg-primary/10 text-primary">
+                    <div className="text-xs font-bold px-2 py-1 rounded bg-blue-100 text-blue-700">
                         Verified Pro
                     </div>
                 </CardFooter>

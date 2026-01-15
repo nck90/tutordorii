@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Check, ChevronRight, Sparkles } from "lucide-react";
+import { completeOnboardingAction } from "@/app/actions";
 
 // Quiz Data
 const STEPS = [
@@ -56,12 +57,13 @@ export default function OnboardingPage() {
         }
     };
 
-    const finishQuiz = () => {
+    const finishQuiz = async () => {
         setIsAnalyzing(true);
-        // Simulate AI Analysis
-        setTimeout(() => {
-            router.push("/");
-        }, 2500);
+        // Simulate AI Analysis logic
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        // Save to DB
+        await completeOnboardingAction(answers);
     };
 
     if (isAnalyzing) {

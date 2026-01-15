@@ -6,8 +6,20 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
+import { getMyScheduleAction } from "@/app/actions";
+import { useEffect } from "react";
+
 export default function SchedulePage() {
     const [date, setDate] = useState<Date | undefined>(new Date());
+    const [schedule, setSchedule] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        getMyScheduleAction().then(data => {
+            setSchedule(data);
+            setLoading(false);
+        });
+    }, []);
 
     return (
         <MobileLayout>
@@ -31,28 +43,27 @@ export default function SchedulePage() {
                     {/* Today's Classes */}
                     <div className="space-y-3">
                         <h2 className="font-bold text-lg flex items-center gap-2">
-                            오늘의 수업 <Badge variant="secondary" className="bg-primary/10 text-primary">2</Badge>
+                            진행 중인 수업 <Badge variant="secondary" className="bg-primary/10 text-primary">{schedule.length}</Badge>
                         </h2>
 
-                        {/* Class Item 1 */}
-                        <Card className="p-4 border-l-4 border-l-primary flex justify-between items-center shadow-sm">
-                            <div>
-                                <span className="text-xs font-bold text-primary mb-1 block">18:00 - 19:30</span>
-                                <h3 className="font-bold">박준원 학생 (IB Math)</h3>
-                                <p className="text-xs text-muted-foreground">Zoom 온라인 수업</p>
+                        {loading ? (
+                            <div className="text-center text-muted-foreground py-10">로딩중...</div>
+                        ) : schedule.length === 0 ? (
+                            <div className="text-center py-8 bg-white rounded-3xl border border-dashed border-slate-200 text-slate-400 text-sm">
+                                예정된 수업이 없습니다.
                             </div>
-                            <Badge variant="outline" className="border-primary/20 text-primary bg-primary/5">예정</Badge>
-                        </Card>
-
-                        {/* Class Item 2 */}
-                        <Card className="p-4 border-l-4 border-l-slate-300 flex justify-between items-center shadow-sm opacity-60">
-                            <div>
-                                <span className="text-xs font-bold text-slate-500 mb-1 block">20:00 - 22:00</span>
-                                <h3 className="font-bold">김민지 학생 (Chemistry)</h3>
-                                <p className="text-xs text-muted-foreground">대치동 스터디카페</p>
-                            </div>
-                            <Badge variant="secondary">완료</Badge>
-                        </Card>
+                        ) : (
+                            schedule.map(item => (
+                                <Card key={item.id} className="p-4 border-l-4 border-l-primary flex justify-between items-center shadow-sm hover:shadow-md transition-shadow">
+                                    <div>
+                                        <span className="text-xs font-bold text-primary mb-1 block">시간 미정</span>
+                                        <h3 className="font-bold">{item.otherName} ({item.subject})</h3>
+                                        <p className="text-xs text-muted-foreground">{new Date(item.date).toLocaleDateString()} 시작됨</p>
+                                    </div>
+                                    <Badge variant="outline" className="border-primary/20 text-primary bg-primary/5">{item.status}</Badge>
+                                </Card>
+                            ))
+                        )}
                     </div>
                 </div>
             </div>

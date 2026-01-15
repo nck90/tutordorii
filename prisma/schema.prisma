@@ -1,0 +1,145 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   // "student" | "tutor"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now()) // Added
+  
+  isOnboarded    Boolean  @default(false)
+  onboardingData String?  // Stores JSON string of quiz answers
+
+  tutorProfile TutorProfile?
+  lessonRequests LessonRequest[] @relation("StudentRequests") // Renamed from sentRequests
+  receivedRequests LessonRequest[] @relation("TutorRequests") // Relation name changed from "ReceivedRequests"
+  
+  studentChats ChatRoom[] @relation("StudentChats")
+  tutorChats   ChatRoom[] @relation("TutorChats")
+  sentMessages Message[]  @relation("SentMessages") // Relation name added back
+
+  reviewsWritten Review[] @relation("ReviewAuthor")
+  reviewsReceived Review[] @relation("TutorReviews")
+  likesGiven     Like[] @relation("StudentLikes")
+  likesReceived  Like[] @relation("TutorLikes")
+}
+
+model TutorProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+
+  bio         String? // Changed to optional
+  university  String? // Changed to optional
+  major       String? // Changed to optional
+  
+  // New Fields for Production
+  price       Int      @default(0) // Changed default
+  education   String?  // JSON string or newline separated
+  reviewCount Int      @default(0)
+  
+  imageUrl String?
+  rating   Float   @default(0.0) // Changed default
+
+  locations      String? // New: Class locations or Online
+  pricingDetails String? // New: Detailed pricing info
+
+
+  tags Tag[] @relation("TutorProfileToTag") // Added relation name
+  reviews Review[]
+  likes Like[]
+}
+
+model Tag {
+  id             String        @id @default(cuid())
+  name           String
+  tutors         TutorProfile[] @relation("TutorProfileToTag") // Renamed and added relation name
+}
+
+model LessonRequest {
+  id        String   @id @default(cuid())
+  studentId String
+  student   User     @relation("StudentRequests", fields: [studentId], references: [id])
+  tutorId   String
+  tutor     User     @relation("TutorRequests", fields: [tutorId], references: [id]) // Relation name changed from "ReceivedRequests"
+  
+  subject   String
+  message   String
+  status    String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
+  
+  chatRoom ChatRoom?
+}
+
+model ChatRoom {
+  id String @id @default(cuid())
+  
+  requestId String @unique
+  request   LessonRequest @relation(fields: [requestId], references: [id])
+  
+  studentId String
+  student   User   @relation("StudentChats", fields: [studentId], references: [id])
+  
+  tutorId   String
+  tutor     User   @relation("TutorChats", fields: [tutorId], references: [id])
+  
+  messages  Message[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  
+  chatRoomId String
+  chatRoom   ChatRoom @relation(fields: [chatRoomId], references: [id])
+  
+  senderId   String
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id]) // Added fields and references
+  
+  content    String
+  isRead     Boolean  @default(false)
+  
+  createdAt  DateTime @default(now())
+}
+
+model Review {
+    id        String   @id @default(cuid())
+    authorId  String
+    author    User     @relation("ReviewAuthor", fields: [authorId], references: [id])
+    tutorId   String
+    tutor     User     @relation("TutorReviews", fields: [tutorId], references: [id])
+    tutorProfileId String
+    tutorProfile TutorProfile @relation(fields: [tutorProfileId], references: [id])
+    
+    rating    Int
+    content   String
+    createdAt DateTime @default(now())
+}
+
+model Like {
+    id        String   @id @default(cuid())
+    studentId String
+    student   User     @relation("StudentLikes", fields: [studentId], references: [id])
+    tutorId   String
+    tutor     User     @relation("TutorLikes", fields: [tutorId], references: [id])
+    tutorProfileId String
+    tutorProfile TutorProfile @relation(fields: [tutorProfileId], references: [id])
+    
+    createdAt DateTime @default(now())
+    
+    @@unique([studentId, tutorId])
+}
