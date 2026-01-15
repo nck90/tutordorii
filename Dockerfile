@@ -46,9 +46,6 @@ COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/src/generated ./src/generated
 
-# Copy the database file if it exists (for development/demo)
-COPY --from=builder /app/*.db* ./ 2>/dev/null || true
-
 RUN chown -R nextjs:nodejs /app
 
 USER nextjs
